@@ -5,6 +5,7 @@ import { AppDataSource } from '../dataSource'
 import { QueryFailedError } from 'typeorm'
 import bcrypt from "bcryptjs"
 import { DatabaseError } from 'pg-protocol'
+import { validate } from "class-validator"
 
 
 class UserController {
@@ -66,6 +67,35 @@ class UserController {
             return res.status(500).send("Unknown error")
         }
     }
+
+    static updateOneByJwt = async (req: CustomRequest, res: Response) => {
+        const id = <number>req.userId
+
+        const userRepository = AppDataSource.getRepository(User)
+
+        try {
+            const user = await userRepository.findOneByOrFail({
+                id: id
+            })
+
+            // Validate the new values on entity
+            user.firstName = req.body['firstName']
+            user.lastName = req.body['lastName']
+            const errors = await validate(user)
+            if (errors.length > 0) {
+                return res.status(400).send(errors)
+            }
+
+            // Save changes and return message
+            await userRepository.save(user)
+            return res.send('User updated')
+            
+        } catch (err) {
+            return res.status(404).send(`User, with id: ${id}, not found`)
+        }
+
+    }
+
 }
 
 export default UserController

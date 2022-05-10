@@ -10,4 +10,7 @@ router.post('/', UserController.newUser)
 // Get user by jwt
 router.get('/', [authenticateToken], UserController.getOneByJwt)
 
+// Update user by JWT
+router.put('/', [authenticateToken], UserController.updateOneByJwt)
+
 export default router
