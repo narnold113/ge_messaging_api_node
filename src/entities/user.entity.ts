@@ -4,10 +4,12 @@ import {
     Column,
     Unique,
     CreateDateColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
+    OneToMany
   } from "typeorm"
   import { Length } from "class-validator"
   import bcrypt from "bcryptjs"
+import { Message } from "./message.entity"
 
 @Entity()
 @Unique(["username"])
@@ -38,6 +40,12 @@ export class User {
     @Column()
     @UpdateDateColumn()
     updatedAt: Date
+
+    @OneToMany(() => Message, (message) => message.fromUser)
+    sentMessages: Message[]
+
+    @OneToMany(() => Message, (message) => message.toUser)
+    receivedMessages: Message[]
 
     checkPassword(password: string) {
         return bcrypt.compareSync(password, this.password);

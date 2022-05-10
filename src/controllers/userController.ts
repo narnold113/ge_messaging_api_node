@@ -1,21 +1,19 @@
-import { User } from '../entities/user.entity'
 import { CustomRequest } from '../types/customRequest.type'
 import { Response } from "express"
-import { AppDataSource } from '../dataSource'
 import { QueryFailedError } from 'typeorm'
 import bcrypt from "bcryptjs"
 import { DatabaseError } from 'pg-protocol'
 import { validate } from "class-validator"
+import { UserRepository } from '../repositories/user.repository'
+import { User } from '../entities/user.entity'
 
 
 class UserController {
     static getOneByJwt = async (req: CustomRequest, res: Response) => {
         const id = <number>req.userId
 
-        const userRepository = AppDataSource.getRepository(User)
-
         try {
-            const user = await userRepository.findOneByOrFail({
+            const user = await UserRepository.findOneByOrFail({
                 id: id
             })
             return res.status(201).send({
@@ -32,17 +30,16 @@ class UserController {
 
     static newUser = async (req: CustomRequest, res: Response) => {
         // Create a new user
-        let user = {
-            firstName: req.body['firstName'],
-            lastName: req.body['lastName'],
-            username: req.body['username'],
-            password: bcrypt.hashSync(req.body['password'])
-        }
-        user = await AppDataSource.getRepository(User).create(user)
+        let user: User = new User()
+        user.firstName = req.body['firstName']
+        user.lastName = req.body['lastName']
+        user.username = req.body['username']
+        user.password = bcrypt.hashSync(req.body['password'])
+        user = await UserRepository.create(user)
 
         // Try saving new user and return error code if username already exists or missing column
         try {
-            const results = await AppDataSource.getRepository(User).save(user)
+            const results = await UserRepository.save(user)
             return res.status(201).send({
                 id: results.id,
                 firstName: results.firstName,
@@ -71,10 +68,9 @@ class UserController {
     static updateOneByJwt = async (req: CustomRequest, res: Response) => {
         const id = <number>req.userId
 
-        const userRepository = AppDataSource.getRepository(User)
 
         try {
-            const user = await userRepository.findOneByOrFail({
+            const user = await UserRepository.findOneByOrFail({
                 id: id
             })
 
@@ -87,7 +83,7 @@ class UserController {
             }
 
             // Save changes and return message
-            await userRepository.save(user)
+            await UserRepository.save(user)
             return res.send('User updated')
             
         } catch (err) {
