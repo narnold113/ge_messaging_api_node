@@ -2,6 +2,10 @@ import { User } from '../entities/user.entity'
 import { CustomRequest } from '../types/customRequest.type'
 import { Response } from "express"
 import { AppDataSource } from '../dataSource'
+import { QueryFailedError } from 'typeorm'
+import bcrypt from "bcryptjs"
+import { DatabaseError } from 'pg-protocol'
+
 
 class UserController {
     static getOneByJwt = async (req: CustomRequest, res: Response) => {
@@ -13,7 +17,12 @@ class UserController {
             const user = await userRepository.findOneByOrFail({
                 id: id
             })
-            return res.send(user)
+            return res.status(201).send({
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                username: user.username
+            })
         } catch (err) {
             return res.status(404).send(`User, with id: ${id}, not found`)
         }
@@ -21,9 +30,41 @@ class UserController {
     }
 
     static newUser = async (req: CustomRequest, res: Response) => {
-        const newUser = await AppDataSource.getRepository(User).create(req.body)
-        const results = await AppDataSource.getRepository(User).save(newUser)
-        return res.send(results)
+        // Create a new user
+        let user = {
+            firstName: req.body['firstName'],
+            lastName: req.body['lastName'],
+            username: req.body['username'],
+            password: bcrypt.hashSync(req.body['password'])
+        }
+        user = await AppDataSource.getRepository(User).create(user)
+
+        // Try saving new user and return error code if username already exists or missing column
+        try {
+            const results = await AppDataSource.getRepository(User).save(user)
+            return res.status(201).send({
+                id: results.id,
+                firstName: results.firstName,
+                lastName: results.lastName,
+                username: results.username
+            })
+        } catch (error) {
+            if (error instanceof QueryFailedError) {
+                const err: DatabaseError = error.driverError
+
+                switch (err.code) {
+                    case '23505':
+                        return res.status(409).send("Username already exists")
+                    break
+                    case '23502':
+                        return res.status(400).send(`Missing ${err.column} param in the body`)
+                    break
+                    default: return res.status(500).send(err.detail)
+
+                }
+            }
+            return res.status(500).send("Unknown error")
+        }
     }
 }
 

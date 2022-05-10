@@ -39,11 +39,7 @@ export class User {
     @UpdateDateColumn()
     updatedAt: Date
 
-    // hashPassword() {
-    //     this.password = bcrypt.hashSync(this.password);
-    // }
-
-    // checkIfUnencryptedPasswordIsValid(unencryptedPassword: string) {
-    //     return bcrypt.compareSync(unencryptedPassword, this.password);
-    // }
+    checkPassword(password: string) {
+        return bcrypt.compareSync(password, this.password);
+    }
 }
