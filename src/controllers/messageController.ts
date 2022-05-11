@@ -7,11 +7,12 @@ import { MessageRepository } from '../repositories/message.repository'
 
 class MessageController {
     static newMessage = async (req: CustomRequest, res: Response) => {
-        const fromUserId = <number>req.userId
+        const fromUserId: number = <number>req.userId
+        const toUserId: number = parseInt(req.body['toUserId'] as string)
 
         const fromUser = await UserRepository.customFindOneById(fromUserId)
-        const toUser = await UserRepository.customFindOneById(req.body['toUserId'] as number)
-        if (toUser !== undefined && fromUser !== undefined) {
+        const toUser = await UserRepository.customFindOneById(toUserId)
+        if (toUser && fromUser) {
             const message = new Message()
             message.fromUser = fromUser
             message.toUser = toUser
