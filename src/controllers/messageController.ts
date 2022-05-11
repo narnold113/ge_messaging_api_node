@@ -3,8 +3,6 @@ import { CustomRequest } from '../types/customRequest.type'
 import { Response } from "express"
 import { UserRepository } from '../repositories/user.repository'
 import { MessageRepository } from '../repositories/message.repository'
-import { QueryFailedError } from 'typeorm'
-import { DatabaseError } from 'pg-protocol'
 
 
 class MessageController {
@@ -90,7 +88,7 @@ class MessageController {
         switch (true) {
             case (affected === 0):
                 return res.status(400).send("messageId not found")
-            case (affected == 1):
+            case (affected === 1):
                 return res.status(200).send({
                     id: messageUpdateResult.raw[0]['id'],
                     fromUserId: messageUpdateResult.raw[0]['fromUserId'],
