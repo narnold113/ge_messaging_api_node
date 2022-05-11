@@ -84,6 +84,7 @@ class MessageController {
             .returning('*')
             .updateEntity(true)
             .execute()
+
         const affected: number = messageUpdateResult?.affected || 0
         switch (true) {
             case (affected === 0):
